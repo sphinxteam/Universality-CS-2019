@@ -1,0 +1,84 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{bm}
+\usepackage{mathbbol}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\newcommand{\comment}[2]{{\noindent\small\color{red}[\textbf{#1}: #2]}}
+\DeclareMathOperator*{\extr}{extr}
+
+\title{(ML-)VAMP state evolution}
+\author{Andre}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Gaussian likelihood}
+
+\begin{align}
+    &A^+ = \frac{1}{V^+ (A^-)} - A^-, \qquad
+    A^- = \frac{1}{V^- (A^+)} - A^+,
+\end{align}
+where
+\begin{align}
+    &V^+ (A) = \mathbb{E}_{x, z} \partial_B^2 \log Z_x (A, Ax + \sqrt{A}z), \\
+    &V^- (A) = \sigma^2 \lim_{N \to \infty} \, \frac{1}{N} \operatorname{Tr}
+    \big[ (\Phi^T \Phi + \frac{A}{\sigma^2})^{-1} \big] = \sigma^2 \, \mathcal{S}
+    (-A \sigma^2).
+\end{align}
+
+\section{Non-Gaussian likelihoods}
+
+Following He at al. (2017), we can track the variances using
+\begin{align}
+    &A^+_x = \frac{1}{V^+_x (A^-_x)} - A^-_x, &&\qquad
+    A^+_z = \frac{1}{V^+_z (A^+_x, 1 / A_z^-)} - A^-_z, \\
+    &A^-_x = \frac{1}{V^-_x (A^+_x, 1 / A_z^-)} - A^+_x, &&\qquad
+    A^-_z = \frac{1}{V^-_z (A^+_z)} - A^+_z, \label{eq:gvamp_se4}
+\end{align}
+where
+\begin{align}
+    &V^+_x (A) = \mathbb{E}_{x, z} \partial_B^2 \log Z_x (A, Ax + \sqrt{A}z), \\
+    &V^+_z (A, \sigma^2) = \sigma^2 \lim_{M \to \infty} \, \frac{1}{M} \operatorname{Tr}
+    \big[ \Phi (\Phi^T \Phi + \frac{A}{\sigma^2})^{-1} \Phi^T \big] = \alpha^{-1} \sigma^2 \big(1 - A \sigma^2 \, \mathcal{S}
+    (-A \sigma^2)\big), \\
+    &V^-_x (A, \sigma^2) = \sigma^2 \lim_{N \to \infty} \, \frac{1}{N} \operatorname{Tr}
+    \big[ (\Phi^T \Phi + \frac{A}{\sigma^2})^{-1} \big] = \sigma^2 \, \mathcal{S}
+    (-A \sigma^2), \\
+    &V^-_z (A) = \frac{1}{A} + \frac{1}{A^2} \, \underbrace{\mathbb{E}_{y,
+        w, z} \partial_w^2 \log Z_z (y, w, 1 / A)}_{-\mathbb{g} (A)}.
+        \label{eq:gvamp_v4}
+\end{align}
+Combining (\ref{eq:gvamp_se4}) and (\ref{eq:gvamp_v4}) yields
+\begin{equation}
+    1 / A_z^- = \frac{1}{\mathbb{g} (A_z^+)} - \frac{1}{A_z^+}.
+\end{equation}
+
+At the fixed points
+\begin{equation}
+    V_x \equiv V_x^+ = V_x^- = \frac{1}{A_x^+ + A_x^-}, \qquad
+    V_z \equiv V_z^+ = V_z^- = \frac{1}{A_z^+ + A_z^-}.
+\end{equation}
+as well as
+\begin{equation}
+    V_z = \frac{1 - A_x^+ V_x}{\alpha A_z^-} = \frac{A_x^- V_x}{\alpha
+        A_z^-} \, \Rightarrow \, \alpha \frac{A_z^-}{A_z^- + A_z^+} =
+        \frac{A_x^-}{A_x^- + A_x^+}
+\end{equation}
+
+These variables relate to ours according to
+\begin{align}
+    V = V_x, \qquad \tilde{A} = A_x^-, \qquad
+    \tilde{V} = 1 / A_z^+, \qquad A = A_z^- A_z^+ V_z = \mathbb{g} (A_z^+), \qquad
+    \theta = A_z^- V_z = \frac{1}{1 + A_z^+ / A_z^-}.
+\end{align}
+
+\end{document}

@@ -114,6 +114,54 @@ def vamp(X, y, var_noise,
 
     return a1, mses[:t]
 
+# Solver modified for seft_thresholding prior
+def vamp_modified(X, y, var_noise,
+         prior=prior_gb, prior_prmts=None, true_coef=None,
+         max_iter=250, tol=1e-6, verbose=1):
+    """Iterate VAMP equations"""
+
+    n_samples, n_features = np.shape(X)
+    # Initialize variables
+    B1 = np.zeros(n_features)
+    A1 = 0.
+    a1 = np.random.randn(n_features)
+    c1 = 1.
+
+    B2 = np.zeros(n_features)
+    A2 = 0.
+    a2 = np.zeros(n_features)
+    c2 = 1.
+
+    # Compute SVD of X
+    U, S, V = np.linalg.svd(X, full_matrices=True)
+    S = np.r_[S, np.zeros(np.abs(V.shape[0] - U.shape[0]))]
+    svd_X = (U, S, V)
+
+    for t in range(max_iter):
+        a1_old = np.copy(a1)
+        lamb_t=0.5*np.exp(-t)
+        # Messages/estimates on x from likelihood
+        A2 = 1. / c1 - A1
+        B2 = a1 / c1 - B1
+        # a2, c2 = lmmse(X, y, var_noise, A2, B2)
+        a2, c2 = lmmse_svd(svd_X, y, var_noise, A2, B2)
+
+        # Messages/estimates on x from prior
+        A1 = 1. / c2 - A2
+        B1 = a2 / c2 - B2
+        a1, c1 = prior(A1, B1, (lamb_t,))
+
+        # Compute metrics
+        conv = np.mean((a1 - a1_old) ** 2)
+        mse = np.mean((a1 - true_coef) ** 2) if true_coef is not None else 0.
+        if verbose > 0:
+            print("t = %d; conv = %g, mse = %g" % (t, conv, mse), flush=True)
+
+        if conv < tol:
+            break
+
+    return a1
+
 
 def run_experiment(n_features, frac_nonzeros, samples_to_features, var_noise,
                    seed=42):

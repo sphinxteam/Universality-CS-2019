@@ -1,20 +1,10 @@
 import scipy
 from scipy.linalg import hadamard
-import matplotlib.pyplot as plt
 import numpy as np
 import random
-
-import dnner
-from dnner import priors
-from dnner import activations
-from dnner import ensembles
-from dnner.priors import SpikeSlab
-from dnner.activations import Linear
-from dnner.ensembles import Gaussian
 from numpy import linalg
 
 from vamp import vamp
-from gvamp import gvamp
 
 #1- List of priors
 
@@ -57,7 +47,7 @@ def ReLU_zero_mean(x):
 	mean = 1 / np.sqrt(2*np.pi)
 	return (np.where(x < 0, 0, x) - mean);
 
-def Gram(f, alpha, beta, n):
+def RF(f, alpha, beta, n):
 	#A of size n0*n1, B of size n1*n
 	n0=int(round(alpha*n))
 	n1=int(round(beta*n))
@@ -89,17 +79,17 @@ def Hadamard(alpha,n):
 
 #3- Main function: returns table of MSE for a given matrix type and rho fixed
 
-def MSEtable_generator(matrix_type=id, Gram=True, prior=prior_gb, rho=0.5, beta=1, n=500, iterations=50, step=0.01, var_noise=1e-8):
-	#matrix_type is a matrix generator if Gram=false, or the function f of the Gram matrix if Gram=True
+def MSEtable_generator(matrix_type=ReLU_zero_mean, RF_matrix=True, prior=prior_gb, rho=0.5, beta=1, n=500, iterations=50, step=0.01, var_noise=1e-8):
+	#matrix_type is a matrix generator if RF_matrix=false, or the function f of the RF matrix if RF_matrix=True
 
 	size=int(1/step)
 	alpha_table=np.linspace(step, size*step, num=size)
 	MSE_table=np.zeros(size)
 	
 	for i in range(size):
-		#Generate matrix for a given alpha
-		if Gram is True:
-			A=Gram(matrix_type, alpha_table[i], beta, N)
+		#Generate matrix for a alpha[i]
+		if RF_matrix is True:
+			A=RF(matrix_type, alpha_table[i], beta, N)
 		else:
 			A=matrix_type(alpha_table[i],N)
 
@@ -131,13 +121,13 @@ def MSEtable_generator(matrix_type=id, Gram=True, prior=prior_gb, rho=0.5, beta=
 #4- Examples for rho=0.5 and Gauss-Bernoulli prior
 
 #MSE transition Bayes-optimal with DCT, rho=0.5
-DCT_gb_2000_rho5=MSEtable_generator(matrix_type=DCT, Gram=False, prior=prior_gb, rho=0.5, n=2000, iterations=20, step=0.02, var_noise=1e-8)
+DCT_gb_2000_rho5=MSEtable_generator(matrix_type=DCT, RF_matrix=False, prior=prior_gb, rho=0.5, n=2000, iterations=20, step=0.02, var_noise=1e-8)
 np.savetxt("DCT_gb_2000_rho5.txt", DCT_gb_2000_rho5)
 
 #MSE transition Bayes-optimal with Hadamard, rho 0.5
-Hadamard_gb_2000_rho5=MSEtable_generator(matrix_type=Hadamard, Gram=False, prior=prior_gb, rho=0.5, n=2048, iterations=20, step=10/512, var_noise=1e-8)
+Hadamard_gb_2000_rho5=MSEtable_generator(matrix_type=Hadamard, RF_matrix=False, prior=prior_gb, rho=0.5, n=2048, iterations=20, step=10/512, var_noise=1e-8)
 np.savetxt("Hadamard_gb_2000_rho5.txt", Hadamard_gb_2000_rho5)
 
-#Mse transition Bayes-optimal with Gram atrix f=tanh, rho=0.5
-tanhGram_gb_2000_rho25=MSEtable_generator(f=np.tanh, Gram=True, prior=prior_gb, rho=0.5, n=2000, iterations=20, step=0.02, var_noise=1e-8)
-np.savetxt("tanhGram_gb_2000_rho25.txt", tanhGram_gb_2000_rho25)
+#Mse transition Bayes-optimal with RF atrix f=tanh, rho=0.5
+tanhRF_gb_2000_rho25=MSEtable_generator(f=np.tanh, RF_matrix=True, prior=prior_gb, rho=0.5, n=2000, iterations=20, step=0.02, var_noise=1e-8)
+np.savetxt("tanhRF_gb_2000_rho25.txt", tanhRF_gb_2000_rho25)
